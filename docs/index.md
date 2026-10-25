@@ -121,6 +121,9 @@ is `labelMetadata.trackingNumber`, the content `labelImage` base64-decoded; the 
 `https://tools.usps.com/go/TrackConfirmAction?tLabels=<number>`. A response without a number is a
 `CarrierException` (`USPS made no label.`). `pickupPoint` is not sent.
 
+> [!WARNING]
+> Known defect: any `label_format` other than `PDF` is labelled `application/zpl`, where the label's real format should be given.
+
 **Track.** `expand=DETAIL`; the locale is not sent. Each tracking event: its `eventTimestamp`, its
 `eventType` as description, `eventCity eventState eventZIP` as location, `eventCode` as `code`;
 sorted oldest first. An event's status is read from its type's words; the tracking's status from
@@ -146,6 +149,9 @@ miles to metres (x 1609). Opening hours are taken by position: the first entry o
 weekday 1 (Monday), the second weekday 2, and so on, each with one `[open, close]` slot as USPS
 writes it; a day without hours keeps an empty slot (`['', '']`). The locations are kept in USPS's
 order and cut to `limit`.
+
+> [!WARNING]
+> Known defect: opening hours are assigned by their position in the answer (Monday first assumed) and a day without hours keeps an empty `['', '']` slot, where the core wants ISO weekdays with `HH:MM` slots only.
 
 ## Example
 
