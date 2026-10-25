@@ -38,7 +38,7 @@ final class UspsGatewayFactory extends GatewayFactory
                 return new Api($http, (string) $c['client_id'], (string) $c['client_secret'], (bool) $c['sandbox'], $c['crid'] ?: null, $c['mid'] ?: null, $c['account'] ?: null);
             },
             'omnibus.action.rating' => static fn (Config $c) => $c->get('rates') ? null : new RatingAction(),
-            'omnibus.action.shipping' => new ShippingAction(),
+            'omnibus.action.shipping' => static fn (Config $c) => $c['crid'] && $c['mid'] && $c['account'] ? new ShippingAction() : null, // a label needs its payer
             'omnibus.action.tracking' => new TrackingAction(),
             'omnibus.action.pickup' => new PickupAction(),
         ]);

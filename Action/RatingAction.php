@@ -40,6 +40,8 @@ final class RatingAction implements ActionInterface, ApiAwareInterface
         $international = 'US' !== strtoupper($s->recipient->country);
         $parcel = $s->parcels[0];
         $rates = [];
+        $failure = null;
+        $answered = 0;
         foreach ($s->option('mail_classes', $international ? self::INTERNATIONAL : self::DOMESTIC) as $class) {
             $body = array_filter([
                 'originZIPCode' => substr($s->sender->postcode, 0, 5),
@@ -56,13 +58,18 @@ final class RatingAction implements ActionInterface, ApiAwareInterface
             ], static fn ($v) => null !== $v);
             try {
                 $data = $this->api->call('POST', $international ? '/international-prices/v3/base-rates/search' : '/prices/v3/base-rates/search', $body);
-            } catch (\Omnibus\Exception\CarrierException) {
-                continue; // a class not offered for this parcel
+            } catch (\Omnibus\Exception\CarrierException $e) {
+                $failure = $e; // a class not offered for this parcel
+                continue;
             }
+            ++$answered;
             foreach ($data['rates'] ?? [] as $rate) {
                 $rates[] = new Rate('usps', $class, (string) ($rate['description'] ?? Mapping::CLASSES[$class] ?? $class), (int) round(((float) ($rate['price'] ?? 0)) * 100), 'USD');
                 break;
             }
+        }
+        if (0 === $answered && null !== $failure) {
+            throw $failure; // every service refused: the carrier failed, not "no rate"
         }
         usort($rates, static fn (Rate $a, Rate $b) => $a->amount <=> $b->amount);
         $request->setResult($rates);

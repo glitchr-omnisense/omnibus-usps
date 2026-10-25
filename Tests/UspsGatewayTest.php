@@ -75,7 +75,7 @@ final class UspsGatewayTest extends TestCase
         self::assertSame('95014', $labelCall[2]['toAddress']['ZIPCode']);
         self::assertSame('CA', $labelCall[2]['toAddress']['state']);
 
-        $this->expectException(CarrierException::class);
+        $this->expectException(\Omnibus\Exception\RequestNotSupportedException::class); // without its option, not offered
         $this->gateway(false)->ship(self::shipment());
     }
 
