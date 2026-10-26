@@ -1,6 +1,6 @@
 # omnibus/usps
 
-USPS for [omniscient/omnibus](https://github.com/glitchr-studio/omnibus): prices (Domestic and
+USPS for [omnisense/omnibus](https://github.com/glitchr-omnisense/omnibus): prices (Domestic and
 International Prices APIs), domestic labels (Labels API, paid through the Payments API), tracking
 (Tracking API) and drop-off locations (Locations API) - the USPS APIs v3 with OAuth2.
 
@@ -8,7 +8,7 @@ International Prices APIs), domestic labels (Labels API, paid through the Paymen
 $gateway = (new UspsGatewayFactory($http))->create($options);   // $http: the application's HTTP client - none given, the factory makes its own; the options below
 ```
 
-No framework needed: the package requires `omniscient/omnibus` and `symfony/http-client`. In a
+No framework needed: the package requires `omnisense/omnibus` and `symfony/http-client`. In a
 Symfony application, the same through the bundle's configuration:
 
 ```yaml

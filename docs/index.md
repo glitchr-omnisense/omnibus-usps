@@ -1,6 +1,6 @@
 # omnibus/usps
 
-USPS for [omniscient/omnibus](https://github.com/glitchr-studio/omnibus): prices, domestic labels
+USPS for [omnisense/omnibus](https://github.com/glitchr-omnisense/omnibus): prices, domestic labels
 paid through a payment authorization, tracking and drop-off locations, through the USPS APIs v3
 on an OAuth 2 client-credentials token. The gateway calls:
 
@@ -23,7 +23,7 @@ on `https://apis.usps.com` (live) or `https://apis-tem.usps.com` (the test envir
 composer require omnibus/usps
 ```
 
-Requires PHP 8.2, `omniscient/omnibus` (2.x) and `symfony/http-client` (6.4, 7 or 8); given no
+Requires PHP 8.2, `omnisense/omnibus` (2.x) and `symfony/http-client` (6.4, 7 or 8); given no
 HTTP client, the factory makes one with `HttpClient::create()`. In a Symfony application with
 `Omnibus\Bridge\Symfony\OmnibusBundle`, the factory is registered as soon as the package is
 installed.
@@ -46,7 +46,7 @@ installed.
 | `crid` | ?string | `null` | for labels | the payer's Customer Registration ID |
 | `mid` | ?string | `null` | for labels | the payer's Mailer ID |
 | `account` | ?string | `null` | for labels | the EPS account number |
-| `rates` | list | - | no | prices from configuration instead of the Prices APIs ([the rates option](https://github.com/glitchr-studio/omnibus/blob/2.x/docs/configuration.md#the-rates-option)): with it, the Prices APIs are not called |
+| `rates` | list | - | no | prices from configuration instead of the Prices APIs ([the rates option](https://github.com/glitchr-omnisense/omnibus/blob/2.x/docs/configuration.md#the-rates-option)): with it, the Prices APIs are not called |
 
 Shipment options (`Shipment::$options`):
 
