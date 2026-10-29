@@ -4,6 +4,7 @@ namespace Omnibus\Usps\Tests;
 
 use Omnibus\Exception\CarrierException;
 use Omnibus\Model\Address;
+use Omnibus\Model\Label;
 use Omnibus\Model\Parcel;
 use Omnibus\Model\Shipment;
 use Omnibus\Model\TrackingStatus;
@@ -109,5 +110,21 @@ final class UspsGatewayTest extends TestCase
     {
         $points = $this->gateway()->pickupPoints(self::shipment()->recipient);
         self::assertSame([2 => [['08:30', '12:00'], ['13:00', '17:00']], 6 => [['09:00', '12:00']]], $points[0]->openingHours);
+    }
+
+    /**
+     * Labels v3's imageInfo.imageType (PDF, TIFF, JPG, PNG, GIF, SVG, ZPL203DPI, ZPL300DPI): each
+     * labelled with its media type; "ZPL" asks for ZPL203DPI, the name USPS gives it.
+     */
+    public function testTheLabelFormatIsLabelledAsItIs(): void
+    {
+        $s = self::shipment();
+        foreach (['PDF' => ['PDF', Label::PDF], 'ZPL' => ['ZPL203DPI', Label::ZPL], 'ZPL300DPI' => ['ZPL300DPI', Label::ZPL], 'tiff' => ['TIFF', 'image/tiff'], 'JPG' => ['JPG', 'image/jpeg'], 'SVG' => ['SVG', 'image/svg+xml']] as $option => [$sent, $type]) {
+            $this->calls = [];
+            $label = $this->gateway()->ship(new Shipment($s->sender, $s->recipient, $s->parcels, reference: $s->reference, options: $s->options + ['label_format' => $option]));
+            $labelCall = array_values(array_filter($this->calls, fn ($c) => '/labels/v3/label' === $c[1]))[0];
+            self::assertSame($sent, $labelCall[2]['imageInfo']['imageType'], $option);
+            self::assertSame($type, $label->format, $option);
+        }
     }
 }

@@ -23,6 +23,9 @@ final class ShippingAction implements ActionInterface, ApiAwareInterface
         $this->apiClass = Api::class;
     }
 
+    /** Labels v3's imageType values and their media types. */
+    private const FORMATS = ['PDF' => Label::PDF, 'TIFF' => 'image/tiff', 'JPG' => 'image/jpeg', 'PNG' => 'image/png', 'GIF' => 'image/gif', 'SVG' => 'image/svg+xml', 'ZPL203DPI' => Label::ZPL, 'ZPL300DPI' => Label::ZPL];
+
     public function supports(Request $request): bool
     {
         return $request instanceof Shipping;
@@ -36,8 +39,10 @@ final class ShippingAction implements ActionInterface, ApiAwareInterface
             throw new CarrierException('usps', 'Only domestic labels are offered: an international one needs a customs form.');
         }
         $parcel = $s->parcels[0];
+        $imageType = strtoupper((string) $s->option('label_format', 'PDF'));
+        $imageType = 'ZPL' === $imageType ? 'ZPL203DPI' : $imageType; // USPS names its ZPL by resolution
         $data = $this->api->call('POST', '/labels/v3/label', [
-            'imageInfo' => ['imageType' => strtoupper((string) $s->option('label_format', 'PDF')), 'labelType' => '4X6LABEL'],
+            'imageInfo' => ['imageType' => $imageType, 'labelType' => '4X6LABEL'],
             'toAddress' => Mapping::address($s->recipient, ['state' => $s->option('recipient_state')]),
             'fromAddress' => Mapping::address($s->sender, ['state' => $s->option('sender_state')]),
             'packageDescription' => array_filter([
@@ -58,6 +63,6 @@ final class ShippingAction implements ActionInterface, ApiAwareInterface
             throw new CarrierException('usps', 'USPS made no label.');
         }
         $image = $data['labelImage'] ?? null;
-        $request->setResult(new Label('usps', $number, \is_string($image) ? base64_decode($image) : null, 'PDF' === strtoupper((string) $s->option('label_format', 'PDF')) ? Label::PDF : Label::ZPL, null, 'https://tools.usps.com/go/TrackConfirmAction?tLabels='.rawurlencode($number)));
+        $request->setResult(new Label('usps', $number, \is_string($image) ? base64_decode($image) : null, self::FORMATS[$imageType] ?? 'application/octet-stream', null, 'https://tools.usps.com/go/TrackConfirmAction?tLabels='.rawurlencode($number)));
     }
 }

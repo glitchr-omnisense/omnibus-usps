@@ -54,7 +54,7 @@ Shipment options (`Shipment::$options`):
 |---|---|---|---|
 | `mail_classes` | rate | the three domestic or the three international classes | the mail classes to price |
 | `price_type` | rate | `COMMERCIAL` | `COMMERCIAL` or `RETAIL` |
-| `label_format` | ship | `PDF` | USPS's `imageType`, sent in capitals |
+| `label_format` | ship | `PDF` | USPS's `imageType`, sent in capitals: `PDF`, `TIFF`, `JPG`, `PNG`, `GIF`, `SVG`, `ZPL203DPI`, `ZPL300DPI`; `ZPL` asks for `ZPL203DPI` |
 | `sender_state` | ship | - | the sender's two-letter state; labels need it |
 | `recipient_state` | ship | - | the recipient's two-letter state; labels need it |
 
@@ -116,13 +116,12 @@ or `USPS_GROUND_ADVANTAGE`, rate indicator `SP`, the weight in pounds, the first
 dimensions in inches, processing category `MACHINABLE`, the mailing date, the reference (30
 characters) as customer reference; headers `X-Payment-Authorization-Token` and `Accept:
 application/vnd.usps.labels+json`. One label is made for the whole shipment. The tracking number
-is `labelMetadata.trackingNumber`, the content `labelImage` base64-decoded; the format is
-`application/pdf` for `PDF` and `application/zpl` for any other `label_format`. `trackingUrl` is
+is `labelMetadata.trackingNumber`, the content `labelImage` base64-decoded; the format is the image
+type's media type (`application/pdf`, `image/tiff`, `image/jpeg`, `image/png`, `image/gif`,
+`image/svg+xml`, `application/zpl` for both ZPL resolutions; another one
+`application/octet-stream`). `trackingUrl` is
 `https://tools.usps.com/go/TrackConfirmAction?tLabels=<number>`. A response without a number is a
 `CarrierException` (`USPS made no label.`). `pickupPoint` is not sent.
-
-> [!WARNING]
-> Known defect: any `label_format` other than `PDF` is labelled `application/zpl`, where the label's real format should be given.
 
 **Track.** `expand=DETAIL`; the locale is not sent. Each tracking event: its `eventTimestamp`, its
 `eventType` as description, `eventCity eventState eventZIP` as location, `eventCode` as `code`;
@@ -245,8 +244,8 @@ those recorded answers.
 Not verified: the README says the package is built from USPS's published API documentation and
 was not yet run against the test environment; that needs the credentials above. Unchecked against
 a real answer: the opening hours, read from the shape of USPS's published example
-(`dropShipAcceptanceTimes`), and the label image types USPS accepts besides `PDF`
-(the README names `ZPL`).
+(`dropShipAcceptanceTimes`), and the label image types besides `PDF` (taken from the Labels
+API's `imageType` values).
 
 ## Responsibility
 
