@@ -54,7 +54,7 @@ final class UspsContractTest extends TestCase
 
     protected function recordedAnswers(): array
     {
-        $office = static fn (string $id, float $distance) => ['facilityID' => $id, 'facilityName' => 'CUPERTINO '.$id, 'address' => ['streetAddress' => '21701 STEVENS CREEK BLVD', 'city' => 'CUPERTINO', 'ZIPCode' => '95014'], 'latitude' => 37.32, 'longitude' => -122.04, 'distance' => $distance, 'hours' => [['open' => '08:30', 'close' => '17:00']]];
+        $office = static fn (string $id, float $distance) => ['facilityID' => $id, 'facilityName' => 'CUPERTINO '.$id, 'address' => ['streetAddress' => '21701 STEVENS CREEK BLVD', 'city' => 'CUPERTINO', 'ZIPCode' => '95014'], 'latitude' => 37.32, 'longitude' => -122.04, 'distance' => $distance, 'dropShipAcceptanceTimes' => [['dayOfWeek' => 'MONDAY', 'times' => [['openTime' => '08:30', 'closeTime' => '17:00']]]]];
 
         return [
             'POST /oauth2/v3/token' => ['access_token' => 'tok', 'expires_in' => 28799],

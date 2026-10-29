@@ -43,7 +43,7 @@ final class UspsGatewayTest extends TestCase
                     ['eventType' => 'Delivered, In/At Mailbox', 'eventTimestamp' => '2026-10-02T14:05:00', 'eventCity' => 'CUPERTINO', 'eventState' => 'CA', 'eventZIP' => '95014', 'eventCode' => '01'],
                     ['eventType' => 'Arrived at USPS Regional Facility', 'eventTimestamp' => '2026-10-01T22:10:00', 'eventCity' => 'SAN JOSE', 'eventState' => 'CA', 'eventCode' => '10'],
                 ]])),
-                '/locations/v3/dropoff-locations' === $path => new MockResponse(json_encode(['locations' => [['facilityID' => '1393910', 'facilityName' => 'CUPERTINO', 'address' => ['streetAddress' => '21701 STEVENS CREEK BLVD', 'city' => 'CUPERTINO', 'ZIPCode' => '95014'], 'latitude' => 37.32, 'longitude' => -122.04, 'distance' => 0.7, 'hours' => [['open' => '08:30', 'close' => '17:00']]]]])),
+                '/locations/v3/dropoff-locations' === $path => new MockResponse(json_encode(['locations' => [['facilityID' => '1393910', 'facilityName' => 'CUPERTINO', 'address' => ['streetAddress' => '21701 STEVENS CREEK BLVD', 'city' => 'CUPERTINO', 'ZIPCode' => '95014'], 'latitude' => 37.32, 'longitude' => -122.04, 'distance' => 0.7, 'dropShipAcceptanceTimes' => [['dayOfWeek' => 'TUESDAY', 'times' => [['openTime' => '08:30', 'closeTime' => '12:00'], ['openTime' => '13:00', 'closeTime' => '17:00']]], ['dayOfWeek' => 'SATURDAY', 'times' => [['openTime' => '9:00', 'closeTime' => '12:00']]], ['dayOfWeek' => 'SUNDAY', 'times' => []]]]]])),
                 default => new MockResponse(json_encode(['error' => ['code' => '404', 'message' => 'No such resource '.$path]]), ['http_code' => 404]),
             };
         });
@@ -98,5 +98,16 @@ final class UspsGatewayTest extends TestCase
         $points = $this->gateway()->pickupPoints(self::shipment()->recipient);
         self::assertSame('1393910', $points[0]->id);
         self::assertSame(1126, $points[0]->distance, '0.7 miles in metres');
+    }
+
+    /**
+     * Locations v3 (USPS/api-examples, dropoff-location-v3-response.json): dropShipAcceptanceTimes
+     * names each day (dayOfWeek MONDAY...) with its times (openTime, closeTime). Read by the day's
+     * name as ISO weekdays, every slot "HH:MM"; a day without times is left out.
+     */
+    public function testOpeningHoursAreReadByTheDaysName(): void
+    {
+        $points = $this->gateway()->pickupPoints(self::shipment()->recipient);
+        self::assertSame([2 => [['08:30', '12:00'], ['13:00', '17:00']], 6 => [['09:00', '12:00']]], $points[0]->openingHours);
     }
 }

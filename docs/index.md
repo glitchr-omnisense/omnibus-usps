@@ -143,15 +143,12 @@ this order:
 
 **Pickup points.** Drop-off locations for `PRIORITY_MAIL` within a radius of 20 (USPS's unit,
 miles) of the address's first street line, city and five-digit ZIP; the limit is applied to the
-answer, not sent. Each location: its `facilityID` (else `locationID`, else `id`), its
+answer, not sent. Each location: its `facilityID` (else `locationID`, else `dropShipmentKey`, else `id`), its
 `facilityName`, its street, ZIP and city, country `US`, coordinates, the distance converted from
-miles to metres (x 1609). Opening hours are taken by position: the first entry of `hours` is
-weekday 1 (Monday), the second weekday 2, and so on, each with one `[open, close]` slot as USPS
-writes it; a day without hours keeps an empty slot (`['', '']`). The locations are kept in USPS's
-order and cut to `limit`.
-
-> [!WARNING]
-> Known defect: opening hours are assigned by their position in the answer (Monday first assumed) and a day without hours keeps an empty `['', '']` slot, where the core wants ISO weekdays with `HH:MM` slots only.
+miles to metres (x 1609). Opening hours come from `dropShipAcceptanceTimes`, by each day's name
+(`dayOfWeek` `MONDAY` to `SUNDAY`, ISO weekdays 1 to 7), every `openTime` / `closeTime` pair a
+`HH:MM` slot; a day without times, or without a name, is left out. The locations are kept in
+USPS's order and cut to `limit`.
 
 ## Example
 
@@ -247,8 +244,8 @@ those recorded answers.
 
 Not verified: the README says the package is built from USPS's published API documentation and
 was not yet run against the test environment; that needs the credentials above. Unchecked against
-a real answer: which weekday the Locations API's first `hours` entry is (taken as Monday), the
-format of its times (passed on as written), and the label image types USPS accepts besides `PDF`
+a real answer: the opening hours, read from the shape of USPS's published example
+(`dropShipAcceptanceTimes`), and the label image types USPS accepts besides `PDF`
 (the README names `ZPL`).
 
 ## Responsibility
