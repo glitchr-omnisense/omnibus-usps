@@ -231,6 +231,12 @@ A missing `client_id` or `client_secret` is an `InvalidConfigException` when the
 `Shipping` without `crid`, `mid` and `account`, `GetSlip`, `Cancel` and `Paperless` raise
 `RequestNotSupportedException` before any call.
 
+No failure carries the client secret, the token and the payment authorization: a network error's
+message has them masked as `***` (the key parameters of a URL too), its previous is a copy of the
+HTTP client's exception (the same class and code), and no trace of the chain keeps its arguments,
+where the request's options stood ([No secret in a
+failure](https://github.com/glitchr-omnisense/omnibus/blob/2.x/docs/errors.md#no-secret-in-a-failure)).
+
 ## Verified, and not
 
 Tested offline: `Tests/UspsGatewayTest.php` (one price request per mail class, weights in pounds

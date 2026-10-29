@@ -3,6 +3,7 @@
 namespace Omnibus\Usps;
 
 use Omnibus\Exception\CarrierException;
+use Omnibus\Http\Redaction;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,14 +51,16 @@ final class Api
             $status = $response->getStatusCode();
             $data = json_decode($response->getContent(false), true);
         } catch (HttpExceptionInterface|\JsonException $e) {
-            throw new CarrierException('usps', 'USPS request failed: '.$e->getMessage(), null, $e);
+            $secrets = $this->secrets();
+
+            throw Redaction::withoutArguments(new CarrierException('usps', 'USPS request failed: '.Redaction::text($e->getMessage(), $secrets), null, Redaction::copy($e, $secrets)));
         }
         if (!\is_array($data)) {
-            throw new CarrierException('usps', sprintf('USPS answered HTTP %d with a body that is not JSON.', $status));
+            throw Redaction::withoutArguments(new CarrierException('usps', sprintf('USPS answered HTTP %d with a body that is not JSON.', $status)));
         }
         if ($status >= 400) {
             $error = $data['error'] ?? [];
-            throw new CarrierException('usps', (string) ($error['message'] ?? $error['errors'][0]['detail'] ?? $data['message'] ?? sprintf('HTTP %d', $status)), isset($error['code']) ? (string) $error['code'] : null);
+            throw Redaction::withoutArguments(new CarrierException('usps', (string) ($error['message'] ?? $error['errors'][0]['detail'] ?? $data['message'] ?? sprintf('HTTP %d', $status)), isset($error['code']) ? (string) $error['code'] : null));
         }
 
         return $data;
@@ -70,13 +73,13 @@ final class Api
             return $this->paymentToken;
         }
         if (!$this->crid || !$this->mid || !$this->account) {
-            throw new CarrierException('usps', 'Labels need the payer: options crid, mid and account (the EPS account).');
+            throw Redaction::withoutArguments(new CarrierException('usps', 'Labels need the payer: options crid, mid and account (the EPS account).'));
         }
         $data = $this->call('POST', '/payments/v3/payment-authorization', ['roles' => [
             ['roleName' => 'PAYER', 'CRID' => $this->crid, 'MID' => $this->mid, 'accountType' => 'EPS', 'accountNumber' => $this->account],
             ['roleName' => 'LABEL_OWNER', 'CRID' => $this->crid, 'MID' => $this->mid, 'accountType' => 'EPS', 'accountNumber' => $this->account],
         ]]);
-        $this->paymentToken = (string) ($data['paymentAuthorizationToken'] ?? throw new CarrierException('usps', 'USPS gave no payment authorization.'));
+        $this->paymentToken = (string) ($data['paymentAuthorizationToken'] ?? throw Redaction::withoutArguments(new CarrierException('usps', 'USPS gave no payment authorization.')));
 
         return $this->paymentToken;
     }
@@ -93,14 +96,26 @@ final class Api
                 'timeout' => $this->timeout,
             ])->toArray(false);
         } catch (HttpExceptionInterface $e) {
-            throw new CarrierException('usps', 'USPS gave no token: '.$e->getMessage(), null, $e);
+            $secrets = $this->secrets();
+
+            throw Redaction::withoutArguments(new CarrierException('usps', 'USPS gave no token: '.Redaction::text($e->getMessage(), $secrets), null, Redaction::copy($e, $secrets)));
         }
         if (empty($data['access_token'])) {
-            throw new CarrierException('usps', (string) ($data['error_description'] ?? 'USPS gave no token: check the client id and secret.'));
+            throw Redaction::withoutArguments(new CarrierException('usps', (string) ($data['error_description'] ?? 'USPS gave no token: check the client id and secret.')));
         }
         $this->token = (string) $data['access_token'];
         $this->expiresAt = time() + (int) ($data['expires_in'] ?? 28799);
 
         return $this->token;
+    }
+
+    /**
+     * What a failure must not carry: the credentials and the token, and what a request made of them.
+     *
+     * @return list<string>
+     */
+    private function secrets(string ...$more): array
+    {
+        return [$this->clientSecret, (string) $this->token, (string) $this->paymentToken, ...$more];
     }
 }
