@@ -212,6 +212,10 @@ omnibus:
                 account: '%env(USPS_EPS_ACCOUNT)%'
 ```
 
+## Usage policy
+
+`policy.json` (named in `composer.json`'s `extra.omnisense.policy`) leaves the limits unknown: USPS's terms say a daily quota exists, shown nowhere public (a 60 an hour seen elsewhere is not declared). Use only for USPS shipping or mailing; no resale, no third-party database. No idempotency key on labels: a label is bought once. A 429 is a `RateLimitedException`, never retried, and the carrier's next calls wait for its `Retry-After`, unsent. See omnisense/omnibus' [Usage policies and rate limits](https://github.com/glitchr-omnisense/omnibus/blob/2.x/docs/policies.md).
+
 ## Errors
 
 Every failure is an `Omnibus\Exception\CarrierException` whose `carrier` is `usps`:

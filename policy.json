@@ -1,0 +1,38 @@
+{
+    "$schema": "https://github.com/glitchr-omnisense/contracts/blob/1.x/resources/usage-policy.schema.json",
+    "provider": "usps",
+    "rateLimits": null,
+    "concurrency": null,
+    "rights": {
+        "commercial": "contract",
+        "openSourceRequired": false,
+        "caching": {
+            "permission": "unknown",
+            "maxTtl": null
+        },
+        "storage": "contract",
+        "redistribution": "forbidden",
+        "attribution": {
+            "required": false,
+            "text": null,
+            "url": null,
+            "where": []
+        },
+        "licence": null
+    },
+    "requirements": {
+        "key": true,
+        "userAgent": {
+            "required": false,
+            "pattern": null
+        }
+    },
+    "provenance": {
+        "terms": "https://developers.usps.com/terms-and-conditions",
+        "policy": "https://developers.usps.com/faq",
+        "verifiedAt": "2026-11-10",
+        "declaredBy": "maintainer",
+        "contact": "https://developers.usps.com",
+        "notes": "The terms say the APIs have a daily request limit shown on their description pages and changed without notice; the FAQ speaks of an hourly quota (429, then a service request). No figure read on an official page (a 60 an hour seen elsewhere is not declared). Use only to facilitate USPS shipping or mailing; tracking may be shared with one's customer; no data mining, no third-party database, no resale; non-published rates not disclosed; credentials not rented or used by a third party. No idempotency key on labels: a label is bought once."
+    }
+}

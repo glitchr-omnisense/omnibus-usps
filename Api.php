@@ -4,6 +4,8 @@ namespace Omnibus\Usps;
 
 use Omnibus\Exception\CarrierException;
 use Omnibus\Http\Redaction;
+use Omnibus\Http\Throttle;
+use Omnisense\Contracts\Policy\Backoff;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -30,6 +32,8 @@ final class Api
         public readonly ?string $mid = null,
         public readonly ?string $account = null,
         private readonly int $timeout = 20,
+        /** The waits the carrier asks for (omnisense/contracts' Backoff): no call while one lasts, a 429 a RateLimitedException, never retried */
+        private readonly ?Backoff $backoff = null,
     ) {
     }
 
@@ -42,6 +46,7 @@ final class Api
     public function call(string $method, string $path, ?array $body = null, array $query = [], array $headers = []): array
     {
         try {
+            Throttle::before($this->backoff);
             $response = $this->http->request($method, $this->base().$path, [
                 'headers' => ['Authorization' => 'Bearer '.$this->token(), 'Content-Type' => 'application/json', 'Accept' => 'application/json'] + $headers,
                 'query' => $query,
@@ -49,6 +54,7 @@ final class Api
                 'timeout' => $this->timeout,
             ]);
             $status = $response->getStatusCode();
+            Throttle::after($this->backoff, 'usps', $status, $response->getHeaders(false));
             $data = json_decode($response->getContent(false), true);
         } catch (HttpExceptionInterface|\JsonException $e) {
             $secrets = $this->secrets();
@@ -90,6 +96,7 @@ final class Api
             return $this->token;
         }
         try {
+            Throttle::before($this->backoff);
             $data = $this->http->request('POST', $this->base().'/oauth2/v3/token', [
                 'headers' => ['Content-Type' => 'application/json'],
                 'body' => json_encode(['grant_type' => 'client_credentials', 'client_id' => $this->clientId, 'client_secret' => $this->clientSecret]),
