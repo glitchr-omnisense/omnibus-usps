@@ -4,6 +4,42 @@ USPS for [omnisense/omnibus](https://github.com/glitchr-omnisense/omnibus): pric
 International Prices APIs), domestic labels (Labels API, paid through the Payments API), tracking
 (Tracking API) and drop-off locations (Locations API) - the USPS APIs v3 with OAuth2.
 
+## Install and a first call
+
+```sh
+composer require omnibus/usps
+```
+
+No account for this first call: USPS's answer is recorded (`Omnibus\Testing\RecordedHttpClient`
+answers in place of the API), so nothing leaves the process. With your own credentials, give the
+factory your HTTP client (or none: it makes its own) and drop the recorded one.
+
+```php
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+use Omnibus\Testing\RecordedHttpClient;
+use Omnibus\Usps\UspsGatewayFactory;
+
+// USPS's answer, recorded: no account, and nothing leaves the process.
+$http = new RecordedHttpClient([
+    'POST /oauth2/v3/token' => ['access_token' => 'tok', 'expires_in' => 28799],
+    '/tracking/v3/tracking/' => ['trackingNumber' => '9400111899223456789012', 'status' => 'Delivered', 'statusCategory' => 'Delivered', 'trackingEvents' => [
+        ['eventType' => 'Delivered, In/At Mailbox', 'eventTimestamp' => '2026-10-02T14:05:00', 'eventCity' => 'CUPERTINO', 'eventState' => 'CA', 'eventZIP' => '95014', 'eventCode' => '01'],
+    ]],
+]);
+$gateway = (new UspsGatewayFactory($http))->create(['client_id' => 'id', 'client_secret' => 'secret', 'sandbox' => true]);
+
+$tracking = $gateway->track('9400111899223456789012');
+echo $tracking->status->value, ' - ', $tracking->latest()?->description, "\n";   // delivered - Delivered, In/At Mailbox
+```
+
+A real call needs a USPS account (the credentials below). The answer is shaped after USPS's
+published documentation; the package has not been run against its service yet.
+
+## Configuration
+
 ```php
 $gateway = (new UspsGatewayFactory($http))->create($options);   // $http: the application's HTTP client - none given, the factory makes its own; the options below
 ```
